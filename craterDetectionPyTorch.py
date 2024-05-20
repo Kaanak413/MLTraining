@@ -117,6 +117,8 @@ def getMasks(annotBox, shape, color=1):
         high= annotations[2],annotations[3]
         img[low:high] = color
     return img
+
+
 class Normalize:
     def __call__(self, image, target):
         image = TF.normalize(image, RESNET_MEAN, RESNET_STD)
@@ -176,16 +178,28 @@ class CraterDataset(Dataset):
                 labels.append((int(class_id), x, y, w, h))
      return labels
     def create_polygon_mask(self,image_size, vertices):
+
         mask_img = Image.new('L', image_size, 0)
+        # img = np.zeros(image_size,dtype=np.uint8)
         pt1 = vertices[0],vertices[1]
         pt2 = vertices[2],vertices[3]
+        # ptx = (vertices[2]+vertices[0])/2
+        # pty = (vertices[3]+vertices[1])/2
+        # ptsizeX = (vertices[2]-vertices[0])
+        # ptsizeY = (vertices[3]-vertices[1])
         pt3 = vertices [2],vertices[1]
         pt4 = vertices [0],vertices[3]
-        verticeTuples = [pt1,pt2,pt3,pt4]
+        # # center = (ptx,pty)
+        # # size = (ptsizeX,ptsizeY)
+        # rotatedRec = cv2.RotatedRect(center,size,0)
+        # img = cv2.ellipse(img,rotatedRec,(255,255,255),-1)
+        # verticeTuples = [pt1,pt2,pt3,pt4]
+        shape = [(vertices[0],vertices[1]), (vertices[2],vertices[3])] 
     # Draw the polygon on the image. The area inside the polygon will be white (255).
-        ImageDraw.Draw(mask_img, 'L').polygon(verticeTuples, fill=(255))
-
-    # Return the image with the drawn polygon
+        ImageDraw.Draw(mask_img, 'L').ellipse(shape, fill=(255))
+        savedim = mask_img.save("sample.jpg")
+    # # Return the image with the drawn polygon
+        # mask_img.show() 
         return mask_img
 
     
@@ -314,7 +328,7 @@ lr_scheduler = torch.optim.lr_scheduler.StepLR(
     gamma=0.2
 )
 
-num_epochs = 20
+num_epochs = 50
 
 result_mAP = []
 best_epoch = None
@@ -345,7 +359,7 @@ else:
     dataset_test, batch_size=1, shuffle=False, num_workers=2,
     collate_fn=utils.collate_fn)
     savedModel = get_model_instance_segmentation(2)
-    savedModel.load_state_dict(torch.load(os.path.join(f'Crater_bestmodel_noaug_sgd(wd=0)_8batch-epoch{19}.pth'),map_location=device))
+    savedModel.load_state_dict(torch.load(os.path.join(f'Crater_bestmodel_noaug_sgd(wd=0)_8batch-epoch{40}.pth'),map_location=device))
     savedModel.to(device)
     evaluate(savedModel, data_loader_test, device=device)
     color_inference = np.array([0.0,0.0,255.0])
